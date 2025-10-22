@@ -340,7 +340,7 @@ ping -c 3 eonwe.K46.com
 ![](images/5.png)
 ![](images/5-ns.png)
 
-"## soal_6 
+## soal_6 
 _"Lonceng Valmar berdentang mengikuti irama Tirion. Pastikan zone transfer berjalan, Pastikan Valmar (ns2) telah menerima salinan zona terbaru dari Tirion (ns1). Nilai serial SOA di keduanya harus sama"_
 ### Langkah pengerjaan
 1. Edit konfigurasi zona lokal BIND
