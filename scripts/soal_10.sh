@@ -1,45 +1,100 @@
-#lindon
-apt update
-apt install nginx -y
+# Di Vingilot
+apt-get update
+apt-get install nginx php8.4-fpm -y
 
-mkdir -p /var/www/html/annals
-echo "<h1>Welcome to Static Web at Lindon</h1>" > /var/www/html/info.txt
-echo "This is a record inside annals folder" > /var/www/html/annals/info.txt
+service php8.4-fpm status
 
-#lindon & node lain bebas
-nano /etc/resolv.conf
-#ganti jadi
-nameserver 192.234.3.3
-nameserver 192.234.3.4
-nameserver 192.168.122.1
+mkdir -p /var/www/app.K46.com
 
-nano /etc/nginx/sites-available/static.K46.com
-#edit jadi
+nano /var/www/app.K46.com/index.php
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vingilot - Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 { color: #2c3e50; }
+        .content { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Vingilot</h1>
+    <div class="content">
+        <p>This is the dynamic web application running on PHP-FPM.</p>
+        <p>Server time: <?php echo date('Y-m-d H:i:s'); ?></p>
+        <p><a href="/about">About Us</a></p>
+    </div>
+</body>
+</html>
+
+nano /var/www/app.K46.com/about.php
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vingilot - About</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 { color: #2c3e50; }
+        .content { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>About Vingilot</h1>
+    <div class="content">
+        <p>Vingilot is the ship of Earendil, sailing through the dynamic seas of PHP.</p>
+        <p>PHP Version: <?php echo phpversion(); ?></p>
+        <p><a href="/">Back to Home</a></p>
+    </div>
+</body>
+</html>
+
+nano /etc/nginx/sites-available/app.K46.com
+
 server {
     listen 80;
-    server_name static.K46.com;
+    server_name app.K46.com;
 
-    root /var/www/html;
-    index index.html;
-
-    access_log /var/log/nginx/static_access.log;
-    error_log /var/log/nginx/static_error.log;
+    root /var/www/app.K46.com;
+    index index.php index.html;
 
     location / {
-        try_files $uri $uri/ =404;
+        try_files $uri $uri/ /index.php?$query_string;
     }
-    location /annals/ {
-        autoindex on;
-        autoindex_exact_size off;
-        autoindex_localtime on;
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location = /about {
+        rewrite ^ /about.php last;
+    }
+
+    location ~ /\.ht {
+        deny all;
     }
 }
-ln -s /etc/nginx/sites-available/static.K46.com /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
+
+ln -s /etc/nginx/sites-available/app.K46.com /etc/nginx/sites-enabled/
+
 nginx -t
+
+service php8.4-fpm restart
 service nginx restart
 
-#node lain bebas
-apt update
-apt install lynx
-lynx static.K46.com/annals
+lynx http://app.K46.com/
+lynx http://app.K46.com/about 
