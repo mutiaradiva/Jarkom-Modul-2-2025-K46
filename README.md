@@ -312,7 +312,7 @@ ping K46.com
 ![](images/4-valmar.png)
 
 ## soal_5 
-_"“Nama memberi arah,” kata Eonwe. Namai semua tokoh (hostname) sesuai glosarium, eonwe, earendil, elwing, cirdan, elrond, maglor, sirion, tirion, valmar, lindon, vingilot, dan verifikasi bahwa setiap host mengenali dan menggunakan hostname tersebut secara system-wide. Buat setiap domain untuk masing masing node sesuai dengan namanya (contoh: eru.<xxxx>.com) dan assign IP masing-masing juga. Lakukan pengecualian untuk node yang bertanggung jawab atas ns1 dan ns2_
+_"“Nama memberi arah,” kata Eonwe. Namai semua tokoh (hostname) sesuai glosarium, eonwe, earendil, elwing, cirdan, elrond, maglor, sirion, tirion, valmar, lindon, vingilot, dan verifikasi bahwa setiap host mengenali dan menggunakan hostname tersebut secara system-wide. Buat setiap domain untuk masing masing node sesuai dengan namanya (contoh: eru.<xxxx>.com) dan assign IP masing-masing juga. Lakukan pengecualian untuk node yang bertanggung jawab atas ns1 dan ns2"_
 ### Langkah pengerjaan
 #### Di semua node
 1. Edit file konfigurasi `/etc/hosts` yang berfungsi sebagai tabel penerjemah nama host ke alamat IP secara lokal
@@ -551,14 +551,198 @@ dig -x 192.234.3.6 @192.234.3.4
 ## soal_9 
 _"Lampion Lindon dinyalakan. Jalankan web statis pada hostname static.<xxxx>.com dan buka folder arsip /annals/ dengan autoindex (directory listing) sehingga isinya dapat ditelusuri. Akses harus dilakukan melalui hostname, bukan IP."_
 ### Langkah pengerjaan
+#### Di Lindon
+1. Update repository sistem dan install nginx yaitu web server yang akan digunakan untuk melayani permintaan HTTP dari client.
+```
+apt update
+apt install nginx -y
+```
+2. Membuat folder `/var/www/html/annals` untuk menyimpan file web tambahan atau `annals`.
+```
+mkdir -p /var/www/html/annals
+```
+3. Tambahkan file teks di dalam folder web untuk menyediakan konten statis yang bisa diakses lewat browser atau lynx.
+```
+echo "<h1>Welcome to Static Web at Lindon</h1>" > /var/www/html/info.txt
+echo "This is a record inside annals folder" > /var/www/html/annals/info.txt
+```
+#### Di Lindon & node lain
+4. Ubah resolver DNS.
+```
+nano /etc/resolv.conf
+```
+Ubah jadi:
+```
+nameserver 192.234.3.3
+nameserver 192.234.3.4
+nameserver 192.168.122.1
+```
+5. Konfigurasi virtual host di Nginx
+```
+nano /etc/nginx/sites-available/static.K46.com
+```
+Isi konfigurasi:
+```
+server {
+    listen 80;
+    server_name static.K46.com;
 
+    root /var/www/html;
+    index index.html;
+
+    access_log /var/log/nginx/static_access.log;
+    error_log /var/log/nginx/static_error.log;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+    location /annals/ {
+        autoindex on;
+        autoindex_exact_size off;
+        autoindex_localtime on;
+    }
+}
+```
+6. Membuat symbolic link agar konfigurasi static.K46.com aktif dan menghapus site default bawaan Nginx supaya tidak bentrok dengan konfigurasi baru.
+```
+ln -s /etc/nginx/sites-available/static.K46.com /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
+```
+7. Uji dan restart Nginx
+```
+nginx -t
+service nginx restart
+```
+#### Di node lain (client)
+8. Install `lynx`, yaitu web browser berbasis teks di terminal, digunakan untuk menguji koneksi HTTP.
+```
+apt update
+apt install lynx
+```
+9. Menguji apakah domain static.K46.com bisa di-resolve (DNS-nya berfungsi) dan apakah Nginx di Lindon bisa diakses. Jika berhasil, kamu akan melihat daftar file dalam folder /annals/ berkat fitur autoindex on seperti gambar berikut.
+```
+lynx static.K46.com/annals
+```
 ![](images/9.png)
 
 ## soal_10 
 _"Vingilot mengisahkan cerita dinamis. Jalankan web dinamis (PHP-FPM) pada hostname app.<xxxx>.com dengan beranda dan halaman about, serta terapkan rewrite sehingga /about berfungsi tanpa akhiran .php. Akses harus dilakukan melalui hostname."_
 ### Langkah pengerjaan
+#### Di Lindon
+1. Update dan install web server + PHP-FPM
+- Nginx → web server yang menerima request HTTP.
+- PHP-FPM (FastCGI Process Manager) → menjalankan file PHP secara efisien melalui proses FastCGI (bukan modul bawaan seperti di Apache).
+```
+apt-get update
+apt-get install nginx php8.4-fpm -y
+```
+2. Aktifkan service PHP-FPM
+```
+service php8.4-fpm start
+```
+3. Membuat folder utama untuk domain `app.K46.com`.
+```
+mkdir -p /var/www/app.K46.com
+```
+4. Membuat file halaman utama (`index.php`)
+```
+nano /var/www/app.K46.com/index.php
+```
+Isi file:
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vingilot - Home</title>
+    ...
+</head>
+<body>
+    <h1>Welcome to Vingilot</h1>
+    <div class="content">
+        <p>This is the dynamic web application running on PHP-FPM.</p>
+        <p>Server time: <?php echo date('Y-m-d H:i:s'); ?></p>
+        <p><a href="/about">About Us</a></p>
+    </div>
+</body>
+</html>
+```
+5. Membuat halaman kedua (`about.php`).
+```
+nano /var/www/app.K46.com/about.php
+```
+Isi file:
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vingilot - About</title>
+    ...
+</head>
+<body>
+    <h1>About Vingilot</h1>
+    <div class="content">
+        <p>Vingilot is the ship of Earendil, sailing through the dynamic seas of PHP.</p>
+        <p>PHP Version: <?php echo phpversion(); ?></p>
+        <p><a href="/">Back to Home</a></p>
+    </div>
+</body>
+</html>
+```
+6. Membuat konfigurasi virtual host Nginx
+```
+nano /etc/nginx/sites-available/app.K46.com
+```
+Isi file:
+```
+server {
+    listen 80;
+    server_name app.K46.com;
 
+    root /var/www/app.K46.com;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location = /about {
+        rewrite ^ /about.php last;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
+7. Membuat symbolic link agar Nginx mengaktifkan konfigurasi `app.K46.com`.
+```
+ln -s /etc/nginx/sites-available/app.K46.com /etc/nginx/sites-enabled/
+```
+8. Mengecek apakah konfigurasi valid dan merestart kedua service agar semua perubahan aktif.
+```
+nginx -t
+service php8.4-fpm restart
+service nginx restart
+```
+9. Pengujian dari terminal
+Mengakses:
+- http://app.K46.com/ → menampilkan halaman utama dengan waktu server dinamis.
+```
+lynx http://app.K46.com/
+```
 ![](images/10.png)
+- http://app.K46.com/about → menampilkan halaman “About” dan versi PHP.
+```
+lynx http://app.K46.com/about
+```
+![](images/10-about.png)
 
 ## soal_11
 
