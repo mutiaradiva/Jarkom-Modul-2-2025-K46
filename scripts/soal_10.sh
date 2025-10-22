@@ -1,41 +1,45 @@
-#vingilot
+#lindon
 apt update
-apt install nginx php-fpm -y
-mkdir -p /var/www/app.K46.com
-cd /var/www/app.K46.com
-echo "<?php phpinfo(); ?>" > index.php
-echo "<h1>About Vingilot</h1>" > about.php
-nano /etc/nginx/sites-available/app.K46.com
+apt install nginx -y
+
+mkdir -p /var/www/html/annals
+echo "<h1>Welcome to Static Web at Lindon</h1>" > /var/www/html/info.txt
+echo "This is a record inside annals folder" > /var/www/html/annals/info.txt
+
+#lindon & node lain bebas
+nano /etc/resolv.conf
+#ganti jadi
+nameserver 192.234.3.3
+nameserver 192.234.3.4
+nameserver 192.168.122.1
+
+nano /etc/nginx/sites-available/static.K46.com
 #edit jadi
 server {
     listen 80;
-    server_name app.K46.com;
+    server_name static.K46.com;
 
-    root /var/www/app.K46.com;
-    index index.php;
+    root /var/www/html;
+    index index.html;
+
+    access_log /var/log/nginx/static_access.log;
+    error_log /var/log/nginx/static_error.log;
 
     location / {
-        try_files $uri $uri/ /index.php?$args;
+        try_files $uri $uri/ =404;
     }
-
-    location /about {
-        rewrite ^/about$ /about.php last;
+    location /annals/ {
+        autoindex on;
+        autoindex_exact_size off;
+        autoindex_localtime on;
     }
-
-    location ~ \.php$ {
-        include fastcgi_params;
-        fastcgi_pass unix:/run/php/php7.X-fpm.sock;  # ganti sesuai versi php-fpm
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-    }
-
-    access_log /var/log/nginx/app_access.log;
-    error_log /var/log/nginx/app_error.log;
 }
-
-ln -s /etc/nginx/sites-available/app.K46.com /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/static.K46.com /etc/nginx/sites-enabled/
 rm /etc/nginx/sites-enabled/default
+nginx -t
 service nginx restart
 
 #node lain bebas
-lynx 
+apt update
+apt install lynx
+lynx static.K46.com/annals

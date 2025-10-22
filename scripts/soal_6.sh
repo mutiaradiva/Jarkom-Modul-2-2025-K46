@@ -1,12 +1,12 @@
 # tirion
-root@Valmar:~# nano /etc/bind/named.conf.local
+nano /etc/bind/named.conf.local
 #edit jadi
 zone "K46.com" {
     type master;
     file "/etc/bind/zones/db.K46.com";
     allow-transfer { 192.234.3.4; };     // IP Valmar
     notify yes;
-    also-notify { 192.234.3.3; };
+    also-notify { 192.234.3.4; };
 };
 
 mkdir -p /etc/bind/zones
