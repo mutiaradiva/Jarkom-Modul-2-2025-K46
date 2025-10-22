@@ -9,33 +9,415 @@ Abiyyu Raihan Putra Wikanto - 5027241042
 ## soal_1 
 _"Di tepi Beleriand yang porak-poranda, Eonwe merentangkan tiga jalur: Barat untuk Earendil dan Elwing, Timur untuk Círdan, Elrond, Maglor, serta pelabuhan DMZ bagi Sirion, Tirion, Valmar, Lindon, Vingilot. Tetapkan alamat dan default gateway tiap tokoh sesuai glosarium yang sudah diberikan."_
 ### Langkah pengerjaan
+1. Setting network node Eonwe dengan fitur Edit network configuration, kita bisa menghapus semua settingnya dan mengisi dengan settingan di bawah
+```
+# WAN (ke NAT)
+auto eth0
+iface eth0 inet dhcp
+
+# Barat
+auto eth1
+iface eth1 inet static
+    address 192.234.1.1
+    netmask 255.255.255.0
+
+# Timur
+auto eth2
+iface eth2 inet static
+    address 192.234.2.1
+    netmask 255.255.255.0
+
+# DMZ
+auto eth3
+iface eth3 inet static
+    address 192.234.3.1
+    netmask 255.255.255.0
+```
+2. Restart semua node
+3. Cek semua node apakah sudah memiliki ip yang sesuai dengan settingan dengan command ip a.
+4. Topologi yang dibuat sudah bisa berjalan secara lokal, tetapi kita belum bisa mengakses jaringan keluar. Maka kita perlu melakukan beberapa hal.
+- Ketikkan command `iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE -s [Prefix IP].0.0/16` pada router Eonwe
+- Ketikkan command `cat /etc/resolv.conf di Eonwe`
+Semua node sekarang sudah bisa melakukan ping ke google, yang artinya adalah sudah tersambung ke internet 
 ![](images/1.png)
 
 ## soal_2
 _"Angin dari luar mulai berhembus ketika Eonwe membuka jalan ke awan NAT. Pastikan jalur WAN di router aktif dan NAT meneruskan trafik keluar bagi seluruh alamat internal sehingga host di dalam dapat mencapai layanan di luar menggunakan IP address"._
 ### Langkah pengerjaan
+1. Setting network masing-masing node dengan fitur Edit network configuration, kita bisa menghapus semua settingnya dan mengisi dengan settingan di bawah
+- Earendil
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.1.2
+    netmask 255.255.255.0
+    gateway 192.234.1.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
 
+- Elwing
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.1.3
+    netmask 255.255.255.0
+    gateway 192.234.1.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+- Cirdan
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.2.2
+    netmask 255.255.255.0
+    gateway 192.234.2.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+- Elrond
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.2.3
+    netmask 255.255.255.0
+    gateway 192.234.2.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+- Maglor
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.2.4
+    netmask 255.255.255.0
+    gateway 192.234.2.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+- Sirion
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.3.2
+    netmask 255.255.255.0
+    gateway 192.234.3.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+- Tirion
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.3.3
+    netmask 255.255.255.0
+    gateway 192.234.3.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+- Valmar
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.3.4
+    netmask 255.255.255.0
+    gateway 192.234.3.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+- Lindon
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.3.5
+    netmask 255.255.255.0
+    gateway 192.234.3.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+- Vingilot
+```
+auto eth0
+iface eth0 inet static
+    address 192.234.3.6
+    netmask 255.255.255.0
+    gateway 192.234.3.1
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+2. Restart semua node
+3. Cek apakah semua sudah terasmbung ke internet
 
 ## soal_3 
 _"Kabar dari Barat menyapa Timur. Pastikan kelima klien dapat saling berkomunikasi lintas jalur (routing internal via Eonwe berfungsi), lalu pastikan setiap host non-router menambahkan resolver 192.168.122.1 saat interfacenya aktif agar akses paket dari internet tersedia sejak awal."_
 ### Langkah pengerjaan
-
+1. Tambahkan konfigurasi berikut di Eonwe
+```
+up apt update
+up apt install iptables
+up iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE -s 192.234.0.0/16
+```
+2. Tambahkan konfigurasi berikut di node selain Eonwe, jika belum ada
+```
+up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
 
 ## soal_4 
 _"Para penjaga nama naik ke menara, di Tirion (ns1/master) bangun zona <xxxx>.com sebagai authoritative dengan SOA yang menunjuk ke ns1.<xxxx>.com dan catatan NS untuk ns1.<xxxx>.com dan ns2.<xxxx>.com. Buat A record untuk ns1.<xxxx>.com dan ns2.<xxxx>.com yang mengarah ke alamat Tirion dan Valmar sesuai glosarium, serta A record apex <xxxx>.com yang mengarah ke alamat Sirion (front door), aktifkan notify dan allow-transfer ke Valmar, set forwarders ke 192.168.122.1. Di Valmar (ns2/slave) tarik zona <xxxx>.com dari Tirion dan pastikan menjawab authoritative. pada seluruh host non-router ubah urutan resolver menjadi IP dari ns1.<xxxx>.com → ns2.<xxxx>.com → 192.168.122.1. Verifikasi query ke apex dan hostname layanan dalam zona dijawab melalui ns1/ns2."_
 ### Langkah pengerjaan
+#### Di Tirion
+1.  Update dan instalasi BIND9
+```
+apt update
+apt install bind9 -y
+```
+2. Konfigurasi zona DNS di Tirion untuk mendefinisikan zona-zona DNS yang akan dikelola server ini.
+```
+nano /etc/bind/named.conf.local
+```
+Isi file diubah menjadi:
+```
+zone "K46.com" {
+    type master;
+    file "/etc/bind/zones/db.K46.com";
+    allow-transfer { 192.234.3.3; };     // IP Valmar
+    notify yes;
+    also-notify { 192.234.3.3; };
+};
+```
+3. Membuat direktori untuk file zona
+```
+mkdir -p /etc/bind/zones
+```
+4. Membuat file database domain
+```
+nano /etc/bind/zones/db.K46.com
+```
+Isi file:
+```
+$TTL 604800
+@   IN  SOA ns1.K46.com. root.K46.com. (
+        2025101101; Serial
+        604800    ; Refresh
+        86400     ; Retry
+        2419200   ; Expire
+        604800 )  ; Negative Cache TTL
+;
+; Name Server Information
+@       IN  NS      ns1.K46.com.
+@       IN  NS      ns2.K46.com.
+
+; Name Server A Record
+ns1     IN  A       192.234.3.2
+ns2     IN  A       192.234.3.3
+
+; Apex (root domain)
+@       IN  A       192.234.3.2
+```
+5. Konfigurasi opsi global BIND9
+```
+nano /etc/bind/named.conf.options
+```
+Isi file
+```
+options {
+    directory "/var/cache/bind";
+
+    forwarders {
+        192.168.122.1;
+    };
+
+    allow-query { any; };
+    recursion yes;
+    auth-nxdomain no;
+    listen-on { any; };
+};
+```
+6. Membuat symbolic link agar service named dan bind9 bisa digunakan bergantian dan menjalankan service BIND9.
+```
+ln -s /etc/init.d/named /etc/init.d/bind9
+service bind9 start
+
+```
+#### Di Valmar
+7. Edit konfigurasi zona pada Valmar
+```
+nano /etc/bind/named.conf.local
+```
+Isi file:
+```
+zone "K46.com" {
+    type slave;
+    masters { 192.234.3.3; };   // IP ns1 Tirion
+    file "/var/lib/bind/db.K46.com";
+};
+```
+8. Membuat direktori untuk file zona
+```
+mkdir -p /etc/bind/zones
+```
+9. Membuat file database domain
+```
+nano /etc/bind/zones/db.K46.com
+```
+Isi file:
+```
+$TTL 604800
+@   IN  SOA ns1.K46.com. root.K46.com. (
+        2025101101; Serial
+        604800    ; Refresh
+        86400     ; Retry
+        2419200   ; Expire
+        604800 )  ; Negative Cache TTL
+;
+; Name Server Information
+@       IN  NS      ns1.K46.com.
+@       IN  NS      ns2.K46.com.
+
+; Name Server A Record
+ns1     IN  A       192.234.3.2
+ns2     IN  A       192.234.3.3
+
+; Apex (root domain)
+@       IN  A       192.234.3.2
+```
+10. Konfigurasi opsi global BIND9
+```
+nano /etc/bind/named.conf.options
+```
+Isi file
+```
+options {
+    directory "/var/cache/bind";
+
+    forwarders {
+        192.168.122.1;
+    };
+
+    allow-query { any; };
+    recursion yes;
+    auth-nxdomain no;
+    listen-on { any; };
+};
+```
+11. Membuat symbolic link agar service named dan bind9 bisa digunakan bergantian dan menjalankan service BIND9.
+```
+ln -s /etc/init.d/named /etc/init.d/bind9
+service bind9 start
+```
+12. Terapkan dan uji konfigurasi di kedua node.
+```
+ping K46.com
+```
 ![](images/4-tirion.png)
 ![](images/4-valmar.png)
 
 ## soal_5 
 _"“Nama memberi arah,” kata Eonwe. Namai semua tokoh (hostname) sesuai glosarium, eonwe, earendil, elwing, cirdan, elrond, maglor, sirion, tirion, valmar, lindon, vingilot, dan verifikasi bahwa setiap host mengenali dan menggunakan hostname tersebut secara system-wide. Buat setiap domain untuk masing masing node sesuai dengan namanya (contoh: eru.<xxxx>.com) dan assign IP masing-masing juga. Lakukan pengecualian untuk node yang bertanggung jawab atas ns1 dan ns2_
 ### Langkah pengerjaan
+#### Di semua node
+1. Edit file konfigurasi `/etc/hosts` yang berfungsi sebagai tabel penerjemah nama host ke alamat IP secara lokal
+```
+nano /etc/hosts
+```
+Isi file diubah menjadi:
+```
+127.0.0.1   localhost
+
+192.234.1.1 eonwe.K46.com eonwe
+192.234.1.2 earendil.K46.com earendil
+192.234.1.3 elwing.K46.com elwing
+192.234.2.2 cirdan.K46.com cirdan
+192.234.2.3 elrond.K46.com elrond
+192.234.2.4 maglor.K46.com maglor
+192.234.3.2 sirion.K46.com sirion
+192.234.3.5 lindon.K46.com lindon
+192.234.3.6 vingilot.K46.com vingilot
+```
+2. Uji konektivitas antar host
+```
+ping -c 3 eonwe.K46.com
+```
 ![](images/5.png)
 ![](images/5-ns.png)
 
 "## soal_6 
 _"Lonceng Valmar berdentang mengikuti irama Tirion. Pastikan zone transfer berjalan, Pastikan Valmar (ns2) telah menerima salinan zona terbaru dari Tirion (ns1). Nilai serial SOA di keduanya harus sama"_
 ### Langkah pengerjaan
+1. Edit konfigurasi zona lokal BIND
+```
+nano /etc/bind/named.conf.local
+```
+2. Tambahkan definisi zona domain K46.com
+```
+zone "K46.com" {
+    type master;
+    file "/etc/bind/zones/db.K46.com";
+    allow-transfer { 192.234.3.4; };     // IP Valmar
+    notify yes;
+    also-notify { 192.234.3.4; };
+};
+```
+3. Membuat direktori penyimpanan zona DNS
+```
+mkdir -p /etc/bind/zones
+```
+4. Membuat atau mengedit file database DNS zona
+```
+nano /etc/bind/zones/db.K46.com
+```
+Isi file:
+```
+$TTL 604800
+@   IN  SOA ns1.K46.com. root.K46.com. (
+        2025101101 ; Serial
+        604800     ; Refresh
+        86400      ; Retry
+        2419200    ; Expire
+        604800 )   ; Negative Cache TTL
+;
+@       IN  NS      ns1.K46.com.
+@       IN  NS      ns2.K46.com.
+ns1     IN  A       192.234.3.3
+ns2     IN  A       192.234.3.4
+@       IN  A       192.234.3.3
+```
+5. Melihat nomor serial dari file zona
+```
+cat /etc/bind/zones/db.K46.com
+```
+6. Restart layanan BIND9
+```
+service bind9 restart
+```
+#### di Valmar
+7. Edit file konfigurasi zona lokal BIND
+```
+nano /etc/bind/named.conf.local
+```
+Isi file:
+```
+zone "K46.com" {
+    type slave;
+    masters { 192.234.3.3; };   # IP Tirion (ns1)
+    file "/var/lib/bind/db.K46.com";
+};
+```
+8. Restart layanan BIND9 di Valmar
+```
+service bind9 restart
+```
+9. Cek apakah file zona hasil transfer sudah ada
+```
+ls -l /var/lib/bind/
+```
+#### Dari Tirion, cek SOA record (serial number)
+```
+dig @192.234.3.3 K46.com SOA
+```
+#### Dari Valmar, cek SOA record-nya juga
+```
+dig @192.234.3.4 K46.com SOA
+```
 ![](images/6-tirion.png)
 ![](images/6-valmar.png)
 
@@ -46,21 +428,136 @@ static.<xxxx>.com → lindon.<xxxx>.com, dan
 app.<xxxx>.com → vingilot.<xxxx>.com. 
 Verifikasi dari dua klien berbeda bahwa seluruh hostname tersebut ter-resolve ke tujuan yang benar dan konsisten."_
 ### Langkah pengerjaan
+#### Di Tirion
+1. Edit file zona
+Isi file:
+```
+$TTL    604800
+@       IN      SOA     ns1.K46.com. root.K46.com. (
+                        2025101101      ; Serial (YYYYMMDDnn)
+                        604800          ; Refresh
+                        86400           ; Retry
+                        2419200         ; Expire
+                        604800 )        ; Negative Cache TTL
+;
+; Name servers
+@       IN      NS      ns1.K46.com.
+@       IN      NS      ns2.K46.com.
+
+; A records
+ns1     IN      A       192.234.3.3
+ns2     IN      A       192.234.3.4
+sirion  IN      A       192.234.3.2
+lindon  IN      A       192.234.3.5
+vingilot IN     A       192.234.3.6
+
+; CNAMEs
+www     IN      CNAME   sirion.K46.com.
+static  IN      CNAME   lindon.K46.com.
+app     IN      CNAME   vingilot.K46.com.
+```
+2. Restart BIND
+```
+service bind9 restart
+```
+3. Uji resolusi ke `www.K46.com`, `static.K46.com`, `app.K46.com`
+```
+ping -c 3 www.K46.com
+ping -c 3 static.K46.com
+ping -c 3 app.K46.com
+```
 ![](images/7.png)
 
 ## soal_8 
 _"Setiap jejak harus bisa diikuti. Di Tirion (ns1) deklarasikan satu reverse zone untuk segmen DMZ tempat Sirion, Lindon, Vingilot berada. Di Valmar (ns2) tarik reverse zone tersebut sebagai slave, isi PTR untuk ketiga hostname itu agar pencarian balik IP address mengembalikan hostname yang benar, lalu pastikan query reverse untuk alamat Sirion, Lindon, Vingilot dijawab authoritative."_
 ### Langkah pengerjaan
+#### Di Tirion
+1. Edit konfigurasi lokal BIND
+```
+nano /etc/bind/named.conf.local
+```
+Tambahkan:
+```
+zone "3.234.192.in-addr.arpa" {
+    type master;
+    file "/etc/bind/zones/db.K46.com";
+    allow-transfer { 192.234.3.4; };
+    also-notify { 192.234.3.4; };
+};
+```
+2. Edit file zona utama yang akan dibaca oleh BIND sebagai sumber data DNS utama.
+```
+nano /etc/bind/zones/db.K46.com
+```
+Isi file:
+```
+$TTL    604800
+@       IN      SOA     ns1.K46.com. root.K46.com. (
+                        2025101201      ; Serial
+                        604800          ; Refresh
+                        86400           ; Retry
+                        2419200         ; Expire
+                        604800 )        ; Negative Cache TTL
+;
+
+; === Nameservers ===
+@       IN      NS      ns1.K46.com.
+@       IN      NS      ns2.K46.com.
+
+; === Host Records ===
+ns1     IN      A       192.234.3.3
+ns2     IN      A       192.234.3.4
+sirion  IN      A       192.234.3.2
+lindon  IN      A       192.234.3.5
+vingilot IN     A       192.234.3.6
+
+; === CNAME ===
+www     IN      CNAME   sirion.K46.com.
+static  IN      CNAME   lindon.K46.com.
+app     IN      CNAME   vingilot.K46.com.
+
+; === Reverse PTR ===
+2       IN      PTR     sirion.K46.com.
+5       IN      PTR     lindon.K46.com.
+6       IN      PTR     vingilot.K46.com.
+```
+3. Restart BIND9
+```
+service bind9 restart
+```
+#### di Valmar
+4. Edit konfigurasi lokal BIND
+```
+nano /etc/bind/named.conf.local
+```
+Isi file:
+zone "3.234.192.in-addr.arpa" {
+    type slave;
+    masters { 192.234.3.3; };
+    file "/var/lib/bind/db.192.234.3";
+};
+5. Restart BIND9
+```
+service bind9 restart
+```
+6. Pengujian (Reverse DNS Lookup)
+```
+dig -x 192.234.3.2 @192.234.3.4
+dig -x 192.234.3.5 @192.234.3.4
+dig -x 192.234.3.6 @192.234.3.4
+```
 ![](images/8.png)
 
 ## soal_9 
 _"Lampion Lindon dinyalakan. Jalankan web statis pada hostname static.<xxxx>.com dan buka folder arsip /annals/ dengan autoindex (directory listing) sehingga isinya dapat ditelusuri. Akses harus dilakukan melalui hostname, bukan IP."_
 ### Langkah pengerjaan
+
 ![](images/9.png)
 
 ## soal_10 
 _"Vingilot mengisahkan cerita dinamis. Jalankan web dinamis (PHP-FPM) pada hostname app.<xxxx>.com dengan beranda dan halaman about, serta terapkan rewrite sehingga /about berfungsi tanpa akhiran .php. Akses harus dilakukan melalui hostname."_
 ### Langkah pengerjaan
+
 ![](images/10.png)
 
 ## soal_11
