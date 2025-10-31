@@ -681,7 +681,7 @@ Isi file:
 <body>
     <h1>About Vingilot</h1>
     <div class="content">
-        <p>Vingilot is the ship of Earendil, sailing through the dynamic seas of PHP.</p>
+        <p>Vingilot means "Foam-flower" in the Quenya language and was the name of Eärendil's ship in J.R.R. Tolkien's legendarium, notes. It is a compound of the words for "foam" and "flower," describing the foam that burst against the ship's prow as it sailed through the sea. The name was also translated into other languages as Rothinzil (Adûnaic) and Gwingloth (Sindarin)</p>
         <p>PHP Version: <?php echo phpversion(); ?></p>
         <p><a href="/">Back to Home</a></p>
     </div>
